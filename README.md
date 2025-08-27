@@ -1,0 +1,251 @@
+# Podcast Transcription and Knowledge Extraction Pipeline
+(c) Benno Löffler
+
+A comprehensive Python pipeline for processing German podcasts and videos, from download to intelligent knowledge extraction. Transform audio/video content into structured entity-relationship knowledge graphs using OpenAI's APIs.
+
+## 🚀 Features
+
+- **Audio Extraction**: Extract high-quality MP3 from video files
+- **AI Transcription**: OpenAI Whisper API with smart chunking for large files  
+- **Content Augmentation**: AI-generated metadata (keywords, segments, summaries)
+- **Entity Extraction**: Intelligent identification of people, concepts, methods, tools, and relationships
+- **Knowledge Graphs**: Automated creation of structured entity-relationship networks
+- **Advanced Deduplication**: Multi-level embedding analysis with clustering for high-quality results
+
+## 📋 Prerequisites
+
+### Required Software
+- **Python 3.8+**
+- **ffmpeg** and **ffprobe** (must be available on PATH)
+- **OpenAI API Key** with access to Whisper and GPT-4o
+
+### Installation
+
+1. **Install Python Dependencies**
+   ```bash
+   pip install openai tqdm scikit-learn numpy tenacity
+   ```
+
+2. **Install ffmpeg**
+   ```bash
+   # macOS
+   brew install ffmpeg
+   
+   # Ubuntu/Debian
+   sudo apt update && sudo apt install ffmpeg
+   
+   # Windows
+   # Download from https://ffmpeg.org/download.html and add to PATH
+   ```
+
+3. **Set OpenAI API Key**
+   ```bash
+   export OPENAI_API_KEY="sk-your-api-key-here"
+   ```
+
+## 📁 Directory Structure
+
+The pipeline processes files through 5 stages with clear directory organization:
+
+```
+project/
+├── data_01_video_source/          # Input: Video files (.mp4, .webm, .mov, etc.)
+├── data_02_mp3_sound_source/      # Stage 1: AUDIO INPUT from PODCAST + Extracted MP3 audio files from Video
+├── data_03_txt_transcribed/       # Stage 2: Transcribed text files  
+├── data_04_augmented/            # Stage 3: AI-augmented files with metadata
+├── data_05_entities/             # Stage 4: Entity files and knowledge graphs
+└── scripts...
+```
+
+## 🎥 Downloading YouTube Videos
+
+For YouTube content, use `yt-dlp` to download videos:
+
+```bash
+# Install yt-dlp
+pip install yt-dlp
+
+# Download single video
+yt-dlp -o "data_01_video_source/%(title)s [%(id)s].%(ext)s" "https://youtube.com/watch?v=VIDEO_ID"
+
+# Download playlist
+yt-dlp -o "data_01_video_source/%(playlist_index)s. %(title)s [%(id)s].%(ext)s" "https://youtube.com/playlist?list=PLAYLIST_ID"
+
+# Download audio-only (high quality)
+yt-dlp -f "bestaudio[ext=m4a]" -o "data_02_mp3_sound_source/%(title)s [%(id)s].%(ext)s" "https://youtube.com/watch?v=VIDEO_ID"
+```
+
+## 🔧 Usage Guide
+
+### Stage 1: Extract Audio from Videos
+Extract MP3 audio tracks from video files using ffmpeg:
+
+```bash
+python 1_batch_extract_mp3_from_video.py data_01_video_source/ data_02_mp3_sound_source/
+```
+
+**Supported formats**: .mp4, .mkv, .webm, .mov, .avi, .flv, .m4v
+**Output**: High-quality MP3 files (CBR 192kbps, 44.1kHz, stereo)
+
+### Stage 2: Transcribe Audio to Text
+Transcribe MP3 files using OpenAI's Whisper API:
+
+```bash
+export OPENAI_API_KEY="sk-your-api-key"
+python 2_batch_whisper_split_then_transcribe_mp3.py data_02_mp3_sound_source/ data_03_txt_transcribed/
+```
+
+**Features**:
+- Automatic chunking for files >24MB (API limit)
+- Duration-aware segmentation (2-15 minute chunks)
+- German language optimization
+- Smart part merging with `[Teil N]` markers
+- Comprehensive error logging
+
+### Stage 3: Augment with AI Metadata
+Add AI-generated metadata and clean formatting:
+
+```bash
+python 3_batch_augment_transcripts.py data_03_txt_transcribed/ data_04_augmented/
+```
+
+**Generated metadata**:
+- Keywords and key phrases
+- Content segments and structure
+- Practical examples mentioned
+- Executive summary
+- 80-character formatted text
+
+### Stage 4a: Basic Entity Extraction
+Extract entities and relationships with standard approach:
+
+```bash
+python 4a_batch_extract_entities_from_augmented_txts.py data_04_augmented/ data_05_entities/
+```
+
+### Stage 4b: Advanced Parallel Extraction (Recommended)
+Extract entities using advanced parallel processing and multi-level analysis:
+
+```bash
+python 4b_batch_parallel_extract_entities_from_augmented_txts.py data_04_augmented/ data_05_entities/
+```
+
+**Advanced features**:
+- 3 parallel LLM calls per text chunk
+- Multi-level embedding analysis (names, descriptions, combined)
+- Graph-based entity clustering
+- LLM-assisted intelligent merging
+- 9 entity types: PERSON, ORGANIZATION, CONCEPT, METHOD, ZUSAMMENHANG, HYPOTHESE, FRAGE, INTERVENTION, WERKZEUG, UNKNOWN
+
+## 📊 Expected Results
+
+### Individual Files
+Each processed file generates corresponding outputs:
+
+```
+input: "podcast-episode.mp4"
+├── data_02_mp3_sound_source/podcast-episode.mp3
+├── data_03_txt_transcribed/podcast-episode.txt  
+├── data_04_augmented/podcast-episode.augmented.txt
+└── data_05_entities/podcast-episode.augmented.entities.txt
+```
+
+### Consolidated Knowledge Graph
+Final consolidated files containing merged entities across all processed content:
+
+- **4a output**: `__ALL_ENTITIES_ALL_RELATIONS.txt` 
+- **4b output**: `__ALL_ENTITIES_ALL_RELATIONS_PARALLEL.txt`
+
+### Entity File Format
+```
+ENTITIES
+Benno: Moderator des Podcasts über Organisationsentwicklung. FOLGEN: 001, 002, 015
+Selbstorganisation: Organisationsmethode bei der Teams autonom arbeiten. FOLGEN: 008, 017, 031
+
+RELATIONS  
+Benno --> Selbstorganisation: SHORT: Diskutiert LONG: Benno diskutiert regelmäßig die Vor- und Nachteile von Selbstorganisation
+```
+
+## 🎯 Interactive Modes
+
+Both entity extraction scripts offer two processing modes:
+
+```bash
+# Full extraction + consolidation (default)
+python 4b_batch_parallel_extract_entities_from_augmented_txts.py data_04_augmented/ data_05_entities/
+[Press ENTER]
+
+# Consolidate existing files only  
+python 4b_batch_parallel_extract_entities_from_augmented_txts.py data_04_augmented/ data_05_entities/
+[Type 'c' and press ENTER]
+```
+
+## ⚠️ Important Notes
+
+### API Costs
+- **Whisper API**: ~$0.006 per minute of audio
+- **GPT-4o**: ~$2.50-$10.00 per 1M tokens (varies by content complexity)
+- **Embeddings**: ~$0.13 per 1M tokens
+- **Stage 4b uses significantly more API calls** due to parallel processing and embedding analysis
+
+### File Size Limits  
+- Max file size for direct transcription: 24MB
+- Files >24MB are automatically chunked
+- Max tokens per AI request: 12,000 (auto-split if larger)
+- Minimum chunk duration: 2 minutes
+- Maximum chunk duration: 15 minutes
+
+### Language Support
+- **Optimized for German content** (podcast transcripts)
+- Whisper API configured with `language="de"`
+- Entity extraction prompts in German
+- Can be adapted for other languages by modifying prompts
+
+## 🔧 Troubleshooting
+
+### Common Issues
+
+**"ffmpeg not found"**
+- Install ffmpeg and ensure it's on your PATH
+- Test with: `ffmpeg -version`
+
+**"Empty transcription files"**
+- Check your OpenAI API key is valid
+- Verify audio file isn't corrupted
+- Check `transcription_debug.log` for details
+
+**"API rate limit exceeded"**
+- The scripts include automatic retry logic
+- For heavy usage, consider API rate limit increases
+
+**"Entity extraction produces duplicates"**  
+- Use 4b (parallel) script for better deduplication
+- Check entity similarity thresholds in the code
+- Review `parallel_entity_extraction.log` for details
+
+### Log Files
+- `transcription_debug.log` - Audio transcription issues
+- `augmentation_debug.log` - Metadata generation issues  
+- `entity_extraction_debug.log` - Entity extraction issues (4a)
+- `parallel_entity_extraction.log` - Parallel extraction issues (4b)
+
+## 📈 Performance Tips
+
+1. **Use 4b script** for highest quality entity extraction
+2. **Process in batches** to monitor API costs
+3. **Check logs regularly** for processing issues
+4. **Use consolidate-only mode** to re-merge existing entities without re-extraction
+5. **Monitor token usage** in OpenAI dashboard
+
+## 🤝 Contributing
+
+This pipeline was developed for German organizational development podcast content but can be adapted for other domains and languages by:
+
+- Modifying entity type patterns in the scripts
+- Adapting prompts for your content domain  
+- Adjusting similarity thresholds for your use case
+- Adding new entity types as needed
+
+## 📄 License
+
+DoWhatTheFuckYouWant

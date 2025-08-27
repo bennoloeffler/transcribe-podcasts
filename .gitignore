@@ -1,0 +1,9 @@
+/.DS_Store
+/.claude
+/.venv
+/HIDE
+/__pycache__
+/entity_extraction_debug.log
+/parallel_entity_extraction.log
+/transcription_debug.log
+/augmentation_debug.log
