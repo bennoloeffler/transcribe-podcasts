@@ -1,6 +1,13 @@
 # Podcast Transcription and Knowledge Extraction Pipeline
 (c) Benno Löffler
 
+# TODOs
+- dont use it for PODCAST ONLY... make the prompt customizable, e.g. by making all prompts available to simple change: 3_prompts.md, 4b_prompts.md (get rid of the herding benno fabian stuff)
+- have ONE source folder: 0_pdf 1_video 2_mp3 : make ONE 0_docs_1_videos_2_sounds__sources
+- when a pipeline is running: mark the "done" files with postfix ".DONE" for each stage.
+- dont reprocess .DONE files.
+- at the final stage, implement a merge of the new generated entities.txt into the __ALL_ENTITIES_ALL_RELATIONS.txt
+
 A comprehensive Python pipeline for processing German podcasts and videos, from download to intelligent knowledge extraction. Transform audio/video content into structured entity-relationship knowledge graphs using OpenAI's APIs.
 
 ## 🚀 Features
