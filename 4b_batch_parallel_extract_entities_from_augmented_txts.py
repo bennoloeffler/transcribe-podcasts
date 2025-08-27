@@ -1190,23 +1190,105 @@ def full_extraction_mode(source_dir: pathlib.Path, dest_dir: pathlib.Path):
     print(f"Approach: {PARALLEL_RUNS} parallel LLM calls per chunk with multi-level embedding analysis and cluster merging")
 
 def main():
-    if len(sys.argv) != 3:
-        print("Usage: python batch_parallel_extract_entities_from_augmented_txts.py <source_folder> <dest_folder>")
-        sys.exit(1)
+    # Parse arguments
+    args = sys.argv[1:]
     
-    source_dir = pathlib.Path(sys.argv[1]).expanduser()
-    dest_dir = pathlib.Path(sys.argv[2]).expanduser()
+    # Handle --help
+    if "--help" in args or "-h" in args:
+        print("Usage: python 4b_batch_parallel_extract_entities_from_augmented_txts.py [ARGUMENTS]")
+        print()
+        print("Modes:")
+        print("  No arguments:")
+        print("    Extract entities from data/4_augmented/ -> data/5_entities/")
+        print("    Source folder must exist with *.augmented.txt files")
+        print()
+        print("  Two arguments <source> <target>:")
+        print("    Extract entities from <source> -> <target>")
+        print("    Source folder must exist with *.augmented.txt files")
+        print("    Target folder will be created if it doesn't exist")
+        print()
+        print("  One argument <target>:")
+        print("    Consolidate-only mode: merge existing *.entities.txt files in <target>")
+        print("    Target folder must exist and contain *.entities.txt files")
+        print("    Creates __ALL_ENTITIES_ALL_RELATIONS_PARALLEL.txt")
+        print()
+        print("Examples:")
+        print("  python 4b_batch_parallel_extract_entities_from_augmented_txts.py")
+        print("  python 4b_batch_parallel_extract_entities_from_augmented_txts.py custom_src/ custom_target/")
+        print("  python 4b_batch_parallel_extract_entities_from_augmented_txts.py data/5_entities/")
+        sys.exit(0)
     
-    # Ask user for processing mode
-    print("\nChoose processing mode:")
-    print("1. Parallel extract entities to single files AND consolidate to one txt file (default)")
-    print("2. Consolidate only - read existing entity files from target folder and merge using hybrid approach")
-    choice = input("Press ENTER for default, or 'c' for consolidate-only: ").strip().lower()
-    
-    if choice == 'c':
-        return consolidate_only_mode(dest_dir)
-    else:
+    # Parse arguments based on count
+    if len(args) == 0:
+        # Mode 1: Default directories - full extraction
+        source_dir = pathlib.Path("data/4_augmented").expanduser()
+        dest_dir = pathlib.Path("data/5_entities").expanduser()
+        
+        if not source_dir.exists():
+            print(f"❌ Error: Source directory not found: {source_dir}")
+            print("Expected: data/4_augmented/ with *.augmented.txt files")
+            print("Use --help for usage information")
+            sys.exit(1)
+        
+        print(f"Mode 1: Full extraction using default directories")
+        print(f"Source: {source_dir} -> Target: {dest_dir}")
         return full_extraction_mode(source_dir, dest_dir)
+    
+    elif len(args) == 1:
+        # Mode 3: Consolidate-only mode
+        dest_dir = pathlib.Path(args[0]).expanduser()
+        
+        if not dest_dir.exists():
+            print(f"❌ Error: Target directory not found: {dest_dir}")
+            print("For consolidate-only mode, target directory must exist with *.entities.txt files")
+            print("Use --help for usage information")
+            sys.exit(1)
+        
+        # Check for existing entity files
+        entity_files = list(dest_dir.glob("*.entities.txt"))
+        if not entity_files:
+            print(f"❌ Error: No *.entities.txt files found in: {dest_dir}")
+            print("For consolidate-only mode, target directory must contain *.entities.txt files")
+            print("Use --help for usage information")
+            sys.exit(1)
+        
+        print(f"Mode 3: Consolidate-only mode")
+        print(f"Target: {dest_dir} (found {len(entity_files)} *.entities.txt files)")
+        return consolidate_only_mode(dest_dir)
+    
+    elif len(args) == 2:
+        # Mode 2: Custom source and target - full extraction
+        source_dir = pathlib.Path(args[0]).expanduser()
+        dest_dir = pathlib.Path(args[1]).expanduser()
+        
+        if not source_dir.exists():
+            print(f"❌ Error: Source directory not found: {source_dir}")
+            print("Source directory must exist with *.augmented.txt files")
+            print("Use --help for usage information")
+            sys.exit(1)
+        
+        # Check for augmented files
+        augmented_files = list(source_dir.glob("*.augmented.txt"))
+        if not augmented_files:
+            print(f"❌ Error: No *.augmented.txt files found in: {source_dir}")
+            print("Source directory must contain *.augmented.txt files")
+            print("Use --help for usage information")
+            sys.exit(1)
+        
+        print(f"Mode 2: Full extraction with custom directories")
+        print(f"Source: {source_dir} -> Target: {dest_dir} (found {len(augmented_files)} *.augmented.txt files)")
+        return full_extraction_mode(source_dir, dest_dir)
+    
+    else:
+        print("❌ Error: Invalid number of arguments")
+        print()
+        print("Valid usage:")
+        print("  python 4b_batch_parallel_extract_entities_from_augmented_txts.py                    # Default extraction")
+        print("  python 4b_batch_parallel_extract_entities_from_augmented_txts.py <source> <target>  # Custom extraction")
+        print("  python 4b_batch_parallel_extract_entities_from_augmented_txts.py <target>           # Consolidate only")
+        print()
+        print("Use --help for detailed usage information")
+        sys.exit(1)
 
 if __name__ == "__main__":
     main()

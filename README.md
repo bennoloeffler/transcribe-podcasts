@@ -23,6 +23,8 @@ A comprehensive Python pipeline for processing German podcasts and videos, from 
 
 1. **Install Python Dependencies**
    ```bash
+   python -m venv .venv
+   source .venv/bin/activate
    pip install openai tqdm scikit-learn numpy tenacity
    ```
 
@@ -49,11 +51,12 @@ The pipeline processes files through 5 stages with clear directory organization:
 
 ```
 project/
-├── data_01_video_source/          # Input: Video files (.mp4, .webm, .mov, etc.)
-├── data_02_mp3_sound_source/      # Stage 1: AUDIO INPUT from PODCAST + Extracted MP3 audio files from Video
-├── data_03_txt_transcribed/       # Stage 2: Transcribed text files  
-├── data_04_augmented/            # Stage 3: AI-augmented files with metadata
-├── data_05_entities/             # Stage 4: Entity files and knowledge graphs
+├── data/
+│   ├── 1_video_source/          # Input: Video files (.mp4, .webm, .mov, etc.)
+│   ├── 2_mp3_sound_source/      # Stage 1: AUDIO INPUT from PODCAST + Extracted MP3 audio files from Video
+│   ├── 3_txt_transcribed/       # Stage 2: Transcribed text files  
+│   ├── 4_augmented/            # Stage 3: AI-augmented files with metadata
+│   └── 5_entities/             # Stage 4: Entity files and knowledge graphs
 └── scripts...
 ```
 
@@ -66,13 +69,13 @@ For YouTube content, use `yt-dlp` to download videos:
 pip install yt-dlp
 
 # Download single video
-yt-dlp -o "data_01_video_source/%(title)s [%(id)s].%(ext)s" "https://youtube.com/watch?v=VIDEO_ID"
+yt-dlp -o "data/1_video_source/%(title)s [%(id)s].%(ext)s" "https://youtube.com/watch?v=VIDEO_ID"
 
 # Download playlist
-yt-dlp -o "data_01_video_source/%(playlist_index)s. %(title)s [%(id)s].%(ext)s" "https://youtube.com/playlist?list=PLAYLIST_ID"
+yt-dlp -o "data/1_video_source/%(playlist_index)s. %(title)s [%(id)s].%(ext)s" "https://youtube.com/playlist?list=PLAYLIST_ID"
 
 # Download audio-only (high quality)
-yt-dlp -f "bestaudio[ext=m4a]" -o "data_02_mp3_sound_source/%(title)s [%(id)s].%(ext)s" "https://youtube.com/watch?v=VIDEO_ID"
+yt-dlp -f "bestaudio[ext=m4a]" -o "data/2_mp3_sound_source/%(title)s [%(id)s].%(ext)s" "https://youtube.com/watch?v=VIDEO_ID"
 ```
 
 ## 🔧 Usage Guide
@@ -81,7 +84,11 @@ yt-dlp -f "bestaudio[ext=m4a]" -o "data_02_mp3_sound_source/%(title)s [%(id)s].%
 Extract MP3 audio tracks from video files using ffmpeg:
 
 ```bash
-python 1_batch_extract_mp3_from_video.py data_01_video_source/ data_02_mp3_sound_source/
+# Using default directories:
+python 1_batch_extract_mp3_from_video.py
+
+# Using custom directories:
+python 1_batch_extract_mp3_from_video.py data/1_video_source/ data/2_mp3_sound_source/
 ```
 
 **Supported formats**: .mp4, .mkv, .webm, .mov, .avi, .flv, .m4v
@@ -92,7 +99,12 @@ Transcribe MP3 files using OpenAI's Whisper API:
 
 ```bash
 export OPENAI_API_KEY="sk-your-api-key"
-python 2_batch_whisper_split_then_transcribe_mp3.py data_02_mp3_sound_source/ data_03_txt_transcribed/
+
+# Using default directories:
+python 2_batch_whisper_split_then_transcribe_mp3.py
+
+# Using custom directories:
+python 2_batch_whisper_split_then_transcribe_mp3.py data/2_mp3_sound_source/ data/3_txt_transcribed/
 ```
 
 **Features**:
@@ -106,7 +118,13 @@ python 2_batch_whisper_split_then_transcribe_mp3.py data_02_mp3_sound_source/ da
 Add AI-generated metadata and clean formatting:
 
 ```bash
-python 3_batch_augment_transcripts.py data_03_txt_transcribed/ data_04_augmented/
+export OPENAI_API_KEY="sk-your-api-key"
+
+# Using default directories:
+python 3_batch_augment_transcripts.py
+
+# Using custom directories:
+python 3_batch_augment_transcripts.py data/3_txt_transcribed/ data/4_augmented/
 ```
 
 **Generated metadata**:
@@ -120,14 +138,26 @@ python 3_batch_augment_transcripts.py data_03_txt_transcribed/ data_04_augmented
 Extract entities and relationships with standard approach:
 
 ```bash
-python 4a_batch_extract_entities_from_augmented_txts.py data_04_augmented/ data_05_entities/
+export OPENAI_API_KEY="sk-your-api-key"
+
+# Using default directories:
+python 4a_batch_extract_entities_from_augmented_txts.py
+
+# Using custom directories:
+python 4a_batch_extract_entities_from_augmented_txts.py data/4_augmented/ data/5_entities/
 ```
 
 ### Stage 4b: Advanced Parallel Extraction (Recommended)
 Extract entities using advanced parallel processing and multi-level analysis:
 
 ```bash
-python 4b_batch_parallel_extract_entities_from_augmented_txts.py data_04_augmented/ data_05_entities/
+export OPENAI_API_KEY="sk-your-api-key"
+
+# Default extraction: data/4_augmented/ -> data/5_entities/
+python 4b_batch_parallel_extract_entities_from_augmented_txts.py
+
+# Custom extraction: <source> -> <target>
+python 4b_batch_parallel_extract_entities_from_augmented_txts.py custom_source/ custom_target/
 ```
 
 **Advanced features**:
@@ -144,10 +174,10 @@ Each processed file generates corresponding outputs:
 
 ```
 input: "podcast-episode.mp4"
-├── data_02_mp3_sound_source/podcast-episode.mp3
-├── data_03_txt_transcribed/podcast-episode.txt  
-├── data_04_augmented/podcast-episode.augmented.txt
-└── data_05_entities/podcast-episode.augmented.entities.txt
+├── data/2_mp3_sound_source/podcast-episode.mp3
+├── data/3_txt_transcribed/podcast-episode.txt  
+├── data/4_augmented/podcast-episode.augmented.txt
+└── data/5_entities/podcast-episode.augmented.entities.txt
 ```
 
 ### Consolidated Knowledge Graph
@@ -166,19 +196,25 @@ RELATIONS
 Benno --> Selbstorganisation: SHORT: Diskutiert LONG: Benno diskutiert regelmäßig die Vor- und Nachteile von Selbstorganisation
 ```
 
-## 🎯 Interactive Modes
+## 🎯 Processing Modes
 
-Both entity extraction scripts offer two processing modes:
+The 4b script offers three simple usage modes:
 
 ```bash
-# Full extraction + consolidation (default)
-python 4b_batch_parallel_extract_entities_from_augmented_txts.py data_04_augmented/ data_05_entities/
-[Press ENTER]
+# Mode 1: Full extraction (default directories)
+python 4b_batch_parallel_extract_entities_from_augmented_txts.py
 
-# Consolidate existing files only  
-python 4b_batch_parallel_extract_entities_from_augmented_txts.py data_04_augmented/ data_05_entities/
-[Type 'c' and press ENTER]
+# Mode 2: Full extraction (custom directories)
+python 4b_batch_parallel_extract_entities_from_augmented_txts.py source_folder/ target_folder/
+
+# Mode 3: Consolidate only - merge existing *.entities.txt files
+python 4b_batch_parallel_extract_entities_from_augmented_txts.py data/5_entities/
 ```
+
+**Mode details:**
+- **0 arguments**: Extract from `data/4_augmented/` → `data/5_entities/`
+- **2 arguments**: Extract from `<source>` → `<target>` 
+- **1 argument**: Consolidate existing `*.entities.txt` files in `<target>` folder only
 
 ## ⚠️ Important Notes
 
@@ -248,4 +284,15 @@ This pipeline was developed for German organizational development podcast conten
 
 ## 📄 License
 
-DoWhatTheFuckYouWant
+do What The Fuck you want to Public License
+
+Version 1.0, March 2000
+Copyright (C) 2000 Banlu Kemiyatorn (]d).
+136 Nives 7 Jangwattana 14 Laksi Bangkok
+Everyone is permitted to copy and distribute verbatim copies
+of this license document, but changing it is not allowed.
+
+Ok, the purpose of this license is simple
+and you just
+
+DO WHAT THE FUCK YOU WANT TO.

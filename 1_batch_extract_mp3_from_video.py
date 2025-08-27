@@ -26,12 +26,19 @@ def run_ffmpeg_to_mp3(src: pathlib.Path, dst: pathlib.Path):
     subprocess.check_call(cmd)
 
 def main():
-    if len(sys.argv) != 3:
-        print("Usage: python exctract_mp3_from_video.py <source_dir> <target_dir>")
+    if len(sys.argv) == 1:
+        # Use default directories
+        source_dir = pathlib.Path("data/1_video_source").expanduser()
+        target_dir = pathlib.Path("data/2_mp3_sound_source").expanduser()
+        print(f"Using default directories: {source_dir} -> {target_dir}")
+    elif len(sys.argv) == 3:
+        source_dir = pathlib.Path(sys.argv[1]).expanduser()
+        target_dir = pathlib.Path(sys.argv[2]).expanduser()
+    else:
+        print("Usage: python 1_batch_extract_mp3_from_video.py [<source_dir> <target_dir>]")
+        print("  No arguments: uses default directories data/1_video_source/ -> data/2_mp3_sound_source/")
+        print("  Two arguments: uses provided directories")
         sys.exit(1)
-
-    source_dir = pathlib.Path(sys.argv[1]).expanduser()
-    target_dir = pathlib.Path(sys.argv[2]).expanduser()
 
     if not source_dir.exists():
         print(f"Source not found: {source_dir}")

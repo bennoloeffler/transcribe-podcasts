@@ -282,12 +282,19 @@ def process_file(client: OpenAI, src_file: pathlib.Path, target_dir: pathlib.Pat
             f.write(f"Processing error for {src_file.name}: {str(e)}\n")
 
 def main():
-    if len(sys.argv) != 3:
-        print("Usage: python batch_augment_transcripts.py <source_folder> <target_folder>")
+    if len(sys.argv) == 1:
+        # Use default directories
+        source_dir = pathlib.Path("data/3_txt_transcribed").expanduser()
+        target_dir = pathlib.Path("data/4_augmented").expanduser()
+        print(f"Using default directories: {source_dir} -> {target_dir}")
+    elif len(sys.argv) == 3:
+        source_dir = pathlib.Path(sys.argv[1]).expanduser()
+        target_dir = pathlib.Path(sys.argv[2]).expanduser()
+    else:
+        print("Usage: python 3_batch_augment_transcripts.py [<source_folder> <target_folder>]")
+        print("  No arguments: uses default directories data/3_txt_transcribed/ -> data/4_augmented/")
+        print("  Two arguments: uses provided directories")
         sys.exit(1)
-    
-    source_dir = pathlib.Path(sys.argv[1]).expanduser()
-    target_dir = pathlib.Path(sys.argv[2]).expanduser()
     
     if not source_dir.exists():
         print(f"Source directory not found: {source_dir}")

@@ -170,12 +170,19 @@ def process_one(client: OpenAI, src: pathlib.Path, target_dir: pathlib.Path):
         logging.info(f"Chunked transcription complete, output written to {output_file} ({len(final_text)} chars total)")
 
 def main():
-    if len(sys.argv) < 3:
-        print("Usage: python batch_whisper_split_then_transcribe.py <source_dir> <target_dir>")
+    if len(sys.argv) == 1:
+        # Use default directories
+        source_dir = pathlib.Path("data/2_mp3_sound_source").expanduser()
+        target_dir = pathlib.Path("data/3_txt_transcribed").expanduser()
+        print(f"Using default directories: {source_dir} -> {target_dir}")
+    elif len(sys.argv) == 3:
+        source_dir = pathlib.Path(sys.argv[1]).expanduser()
+        target_dir = pathlib.Path(sys.argv[2]).expanduser()
+    else:
+        print("Usage: python 2_batch_whisper_split_then_transcribe_mp3.py [<source_dir> <target_dir>]")
+        print("  No arguments: uses default directories data/2_mp3_sound_source/ -> data/3_txt_transcribed/")
+        print("  Two arguments: uses provided directories")
         sys.exit(1)
-
-    source_dir = pathlib.Path(sys.argv[1]).expanduser()
-    target_dir = pathlib.Path(sys.argv[2]).expanduser()
 
     if not source_dir.exists():
         print(f"Source not found: {source_dir}")

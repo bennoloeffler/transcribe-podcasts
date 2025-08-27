@@ -1,0 +1,11 @@
+1. this is a results folder: text files are augmented with keywords and key content.
+2. to extract entities from here, call:
+
+# Extract with default directories (data/4_augmented/ -> data/5_entities/):
+python 4b_batch_parallel_extract_entities_from_augmented_txts.py
+
+# Extract with custom directories:
+python 4b_batch_parallel_extract_entities_from_augmented_txts.py data/4_augmented/ data/5_entities/
+
+# Using custom folder names:
+python 4b_batch_parallel_extract_entities_from_augmented_txts.py /content/enriched_docs/ /knowledge/entity_graphs/

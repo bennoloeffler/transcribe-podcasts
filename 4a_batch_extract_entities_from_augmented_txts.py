@@ -1047,12 +1047,19 @@ def full_extraction_mode(source_dir: pathlib.Path, dest_dir: pathlib.Path):
     print(f"Consolidated file: {consolidated_file}")
 
 def main():
-    if len(sys.argv) != 3:
-        print("Usage: python batch_extract_entities_from_augmented_txts.py <source_folder> <dest_folder>")
+    if len(sys.argv) == 1:
+        # Use default directories
+        source_dir = pathlib.Path("data/4_augmented").expanduser()
+        dest_dir = pathlib.Path("data/5_entities").expanduser()
+        print(f"Using default directories: {source_dir} -> {dest_dir}")
+    elif len(sys.argv) == 3:
+        source_dir = pathlib.Path(sys.argv[1]).expanduser()
+        dest_dir = pathlib.Path(sys.argv[2]).expanduser()
+    else:
+        print("Usage: python 4a_batch_extract_entities_from_augmented_txts.py [<source_folder> <dest_folder>]")
+        print("  No arguments: uses default directories data/4_augmented/ -> data/5_entities/")
+        print("  Two arguments: uses provided directories")
         sys.exit(1)
-    
-    source_dir = pathlib.Path(sys.argv[1]).expanduser()
-    dest_dir = pathlib.Path(sys.argv[2]).expanduser()
     
     # Ask user for processing mode
     print("\nChoose processing mode:")

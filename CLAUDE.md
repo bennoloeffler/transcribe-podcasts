@@ -21,52 +21,81 @@ This is a German podcast/video transcription and knowledge extraction pipeline w
 
 ## Directory Structure
 
-The pipeline follows a 3-stage processing flow with optional 4th stage:
+The pipeline follows a 5-stage processing flow:
 
-- `data_01_video_source/`: Source video files (.webm, .mp4, etc.)
-- `data_02_mp3_sound_source/`: Extracted MP3 audio files and podcast sources  
-- `data_03_txt_transcribed/`: Final transcription text files
-- `data_04_augmented/`: (Optional) Augmented files with JSON metadata and cleaned text
-- `data_05_entities/`: (Optional) Entity/relation files and consolidated knowledge graph
+- `data/1_video_source/`: Source video files (.webm, .mp4, etc.)
+- `data/2_mp3_sound_source/`: Extracted MP3 audio files and podcast sources  
+- `data/3_txt_transcribed/`: Final transcription text files
+- `data/4_augmented/`: (Optional) Augmented files with JSON metadata and cleaned text
+- `data/5_entities/`: (Optional) Entity/relation files and consolidated knowledge graph
 
 ## Common Commands
 
 ### Extract MP3 from video files:
 ```bash
-python 1_batch_extract_mp3_from_video.py data_01_video_source/ data_02_mp3_sound_source/
+# Using default directories:
+python 1_batch_extract_mp3_from_video.py
+
+# Using custom directories:
+python 1_batch_extract_mp3_from_video.py data/1_video_source/ data/2_mp3_sound_source/
 ```
 
 ### Transcribe MP3 files:
 ```bash
 export OPENAI_API_KEY="sk-..."
-python 2_batch_whisper_split_then_transcribe_mp3.py data_02_mp3_sound_source/ data_03_txt_transcribed/
+
+# Using default directories:
+python 2_batch_whisper_split_then_transcribe_mp3.py
+
+# Using custom directories:
+python 2_batch_whisper_split_then_transcribe_mp3.py data/2_mp3_sound_source/ data/3_txt_transcribed/
 ```
 
 ### Augment transcripts with AI metadata:
 ```bash
 export OPENAI_API_KEY="sk-..."
-python 3_batch_augment_transcripts.py data_03_txt_transcribed/ data_04_augmented/
+
+# Using default directories:
+python 3_batch_augment_transcripts.py
+
+# Using custom directories:
+python 3_batch_augment_transcripts.py data/3_txt_transcribed/ data/4_augmented/
 ```
 
 ### Extract entities and relations (standard approach):
 ```bash
 export OPENAI_API_KEY="sk-..."
-python 4a_batch_extract_entities_from_augmented_txts.py data_04_augmented/ data_05_entities/
+
+# Using default directories:
+python 4a_batch_extract_entities_from_augmented_txts.py
+
+# Using custom directories:
+python 4a_batch_extract_entities_from_augmented_txts.py data/4_augmented/ data/5_entities/
 ```
 
 ### Extract entities and relations (parallel approach - recommended):
 ```bash
 export OPENAI_API_KEY="sk-..."
-python 4b_batch_parallel_extract_entities_from_augmented_txts.py data_04_augmented/ data_05_entities/
+
+# Default extraction: data/4_augmented/ -> data/5_entities/
+python 4b_batch_parallel_extract_entities_from_augmented_txts.py
+
+# Custom extraction: <source> -> <target>
+python 4b_batch_parallel_extract_entities_from_augmented_txts.py custom_source/ custom_target/
 ```
 
 ### Consolidate existing entity files only:
 ```bash
-# For 4a (standard):
-echo "c" | python 4a_batch_extract_entities_from_augmented_txts.py data_04_augmented/ data_05_entities/
+# For 4a (standard) - merge existing *.entities.txt files:
+echo "c" | python 4a_batch_extract_entities_from_augmented_txts.py data/4_augmented/ data/5_entities/
 
-# For 4b (parallel):
-echo "c" | python 4b_batch_parallel_extract_entities_from_augmented_txts.py data_04_augmented/ data_05_entities/
+# For 4b (parallel) - merge existing *.entities.txt files:
+python 4b_batch_parallel_extract_entities_from_augmented_txts.py data/5_entities/
+
+# For 4b with custom entities folder:
+python 4b_batch_parallel_extract_entities_from_augmented_txts.py custom/entities/folder/
+
+# Note: One argument = consolidate-only mode (merges *.entities.txt -> __ALL_ENTITIES_ALL_RELATIONS_PARALLEL.txt)
 ```
 
 ## Architecture Notes
