@@ -10,6 +10,7 @@
 #   ffmpeg + ffprobe must be available on PATH
 
 import os, sys, pathlib, shutil, json, subprocess, math, tempfile, logging
+from datetime import datetime
 from tqdm import tqdm
 from openai import OpenAI
 
@@ -188,9 +189,29 @@ def main():
         print(f"Source not found: {source_dir}")
         sys.exit(2)
 
-    # delete & recreate target
+    # Check existing files in target directory instead of deleting everything!
+    logging.info(f"Checking target directory: {target_dir}")
     if target_dir.exists():
-        shutil.rmtree(target_dir)
+        existing_files = list(target_dir.glob("*"))
+        logging.info(f"Target directory exists with {len(existing_files)} existing files:")
+        for file in existing_files[:20]:  # Log first 20 files
+            logging.info(f"  Existing: {file.name} ({file.stat().st_size} bytes)")
+        if len(existing_files) > 20:
+            logging.info(f"  ... and {len(existing_files) - 20} more files")
+        
+        # Count different file types
+        txt_files = [f for f in existing_files if f.suffix == ".txt" and not f.name.endswith(".error.txt")]
+        error_files = [f for f in existing_files if f.name.endswith(".error.txt")]
+        other_files = [f for f in existing_files if f not in txt_files and f not in error_files]
+        
+        logging.warning(f"PRESERVING existing files: {len(txt_files)} .txt, {len(error_files)} .error.txt, {len(other_files)} others")
+        print(f"WARNING: Target directory contains {len(existing_files)} existing files (including {len(txt_files)} .txt files)")
+        print(f"These files will be PRESERVED. Only files with same names as new MP3s will be overwritten.")
+    else:
+        logging.info(f"Target directory does not exist, will create it")
+        print(f"Creating new target directory: {target_dir}")
+    
+    # Create directory if it doesn't exist (but don't delete existing content!)
     target_dir.mkdir(parents=True, exist_ok=True)
 
     client = OpenAI()
@@ -201,9 +222,30 @@ def main():
         try:
             process_one(client, mp3, target_dir)
         except subprocess.CalledProcessError as e:
-            (target_dir / (mp3.stem + ".error.txt")).write_text(f"ffmpeg error: {e}", encoding="utf-8")
+            error_file = target_dir / (mp3.stem + ".error.txt")
+            error_file.write_text(f"ffmpeg error: {e}", encoding="utf-8")
+            logging.error(f"FFmpeg error for {mp3.name}: {e}")
         except Exception as e:
-            (target_dir / (mp3.stem + ".error.txt")).write_text(str(e), encoding="utf-8")
+            error_file = target_dir / (mp3.stem + ".error.txt")
+            error_file.write_text(str(e), encoding="utf-8")
+            logging.error(f"Transcription error for {mp3.name}: {e}")
+    
+    # Log final results
+    if target_dir.exists():
+        final_files = list(target_dir.glob("*.txt"))
+        error_files = list(target_dir.glob("*.error.txt"))
+        other_files = [f for f in target_dir.glob("*") if f not in final_files and f not in error_files]
+        
+        logging.info(f"Transcription complete. Directory now contains:")
+        logging.info(f"  - {len(final_files)} .txt files (transcriptions)")
+        logging.info(f"  - {len(error_files)} .error.txt files")
+        logging.info(f"  - {len(other_files)} other files (preserved from before)")
+        
+        for txt_file in final_files:
+            size = txt_file.stat().st_size
+            logging.info(f"  Transcription: {txt_file.name} ({size} bytes)")
+    
+    logging.info(f"Whisper transcription process completed at {datetime.now()}")
 
 if __name__ == "__main__":
     main()

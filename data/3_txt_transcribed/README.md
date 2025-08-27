@@ -1,11 +1,11 @@
-1. place text files here (.txt)
-2. to augment them, call:
+1. this is a results folder: text files from transcription and document extraction.
+2. to augment them with AI metadata, call:
 
-# Using default directories:
+# Augment with default directories (data/3_txt_transcribed/ -> data/4_augmented/):
 python 3_batch_augment_transcripts.py
 
-# Using custom directories:
+# Augment with custom directories:
 python 3_batch_augment_transcripts.py data/3_txt_transcribed/ data/4_augmented/
 
 # Using custom folder names:
-python 3_batch_augment_transcripts.py /transcripts/raw_texts/ /enhanced/ai_augmented_content/
+python 3_batch_augment_transcripts.py /content/transcribed_docs/ /enriched/metadata_files/

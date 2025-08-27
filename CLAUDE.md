@@ -4,8 +4,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-This is a German podcast/video transcription and knowledge extraction pipeline with five main Python scripts:
+This is a German document and podcast/video transcription and knowledge extraction pipeline with six main Python scripts:
 
+- `0_batch_extract_txt_from_pdf_office_etc.py`: Extracts text from PDF and Office documents (PDF, DOCX, PPTX, TXT, MD) to markdown format
 - `1_batch_extract_mp3_from_video.py`: Extracts MP3 audio tracks from video files using ffmpeg
 - `2_batch_whisper_split_then_transcribe_mp3.py`: Transcribes MP3 files using OpenAI's Whisper API with intelligent chunking for large files
 - `3_batch_augment_transcripts.py`: Augments transcript files with AI-generated JSON metadata (keywords, segments, examples, summary)
@@ -16,20 +17,31 @@ This is a German podcast/video transcription and knowledge extraction pipeline w
 
 - **ffmpeg/ffprobe**: Required on PATH for audio/video processing
 - **OpenAI Python SDK** (`openai`): For Whisper transcription API calls
+- **Document processing packages**: PyMuPDF (fitz), python-docx, python-pptx, markdown
 - **tqdm**: Progress bars during processing
-- **OPENAI_API_KEY**: Environment variable required for transcription
+- **OPENAI_API_KEY**: Environment variable required for transcription and AI processing
 
 ## Directory Structure
 
-The pipeline follows a 5-stage processing flow:
+The pipeline follows a 6-stage processing flow:
 
+- `data/0_pdf_office_etc_source/`: Source PDF and Office documents (.pdf, .docx, .pptx, .txt, .md)
 - `data/1_video_source/`: Source video files (.webm, .mp4, etc.)
 - `data/2_mp3_sound_source/`: Extracted MP3 audio files and podcast sources  
-- `data/3_txt_transcribed/`: Final transcription text files
+- `data/3_txt_transcribed/`: Text files from transcription and document extraction
 - `data/4_augmented/`: (Optional) Augmented files with JSON metadata and cleaned text
 - `data/5_entities/`: (Optional) Entity/relation files and consolidated knowledge graph
 
 ## Common Commands
+
+### Extract text from PDF and Office documents:
+```bash
+# Using default directories:
+python 0_batch_extract_txt_from_pdf_office_etc.py
+
+# Using custom directories:
+python 0_batch_extract_txt_from_pdf_office_etc.py documents/ extracted_texts/
+```
 
 ### Extract MP3 from video files:
 ```bash
@@ -96,6 +108,14 @@ python 4b_batch_parallel_extract_entities_from_augmented_txts.py data/5_entities
 python 4b_batch_parallel_extract_entities_from_augmented_txts.py custom/entities/folder/
 
 # Note: One argument = consolidate-only mode (merges *.entities.txt -> __ALL_ENTITIES_ALL_RELATIONS_PARALLEL.txt)
+```
+
+### Run complete pipeline:
+```bash
+export OPENAI_API_KEY="sk-..."
+
+# Complete pipeline: PDF extraction + video processing + transcription + entities
+python 0__batch_run_complete_pipeline.py
 ```
 
 ## Architecture Notes

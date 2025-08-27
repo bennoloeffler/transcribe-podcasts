@@ -25,7 +25,7 @@ A comprehensive Python pipeline for processing German podcasts and videos, from 
    ```bash
    python -m venv .venv
    source .venv/bin/activate
-   pip install openai tqdm scikit-learn numpy tenacity
+   pip install openai tqdm scikit-learn numpy tenacity pymupdf python-docx python-pptx markdown
    ```
 
 2. **Install ffmpeg**
@@ -47,14 +47,15 @@ A comprehensive Python pipeline for processing German podcasts and videos, from 
 
 ## 📁 Directory Structure
 
-The pipeline processes files through 5 stages with clear directory organization:
+The pipeline processes files through 6 stages with clear directory organization:
 
 ```
 project/
 ├── data/
+│   ├── 0_pdf_office_etc_source/ # Input: PDF/Office documents (.pdf, .docx, .pptx, .txt, .md)
 │   ├── 1_video_source/          # Input: Video files (.mp4, .webm, .mov, etc.)
 │   ├── 2_mp3_sound_source/      # Stage 1: AUDIO INPUT from PODCAST + Extracted MP3 audio files from Video
-│   ├── 3_txt_transcribed/       # Stage 2: Transcribed text files  
+│   ├── 3_txt_transcribed/       # Stage 2: Text from transcription and document extraction
 │   ├── 4_augmented/            # Stage 3: AI-augmented files with metadata
 │   └── 5_entities/             # Stage 4: Entity files and knowledge graphs
 └── scripts...
@@ -79,6 +80,24 @@ yt-dlp -f "bestaudio[ext=m4a]" -o "data/2_mp3_sound_source/%(title)s [%(id)s].%(
 ```
 
 ## 🔧 Usage Guide
+
+### Stage 0: Extract Text from PDF and Office Documents
+Extract text from documents and convert to markdown format:
+
+```bash
+# Using default directories:
+python 0_batch_extract_txt_from_pdf_office_etc.py
+
+# Using custom directories:
+python 0_batch_extract_txt_from_pdf_office_etc.py documents/ extracted_texts/
+```
+
+**Supported formats**: .pdf, .docx, .pptx, .txt, .md  
+**Output**: 
+- PDF/DOCX/PPTX: Extracted text as `.pdf.md.txt`, `.docx.md.txt`, `.pptx.md.txt`
+- MD files: Copied to `.md.txt`  
+- TXT files: Copied directly as `.txt` (collision backup as `.old`)  
+**Dependencies**: `pip install pymupdf python-docx python-pptx markdown`
 
 ### Stage 1: Extract Audio from Videos
 Extract MP3 audio tracks from video files using ffmpeg:
@@ -173,11 +192,12 @@ python 4b_batch_parallel_extract_entities_from_augmented_txts.py custom_source/ 
 Each processed file generates corresponding outputs:
 
 ```
-input: "podcast-episode.mp4"
-├── data/2_mp3_sound_source/podcast-episode.mp3
-├── data/3_txt_transcribed/podcast-episode.txt  
-├── data/4_augmented/podcast-episode.augmented.txt
-└── data/5_entities/podcast-episode.augmented.entities.txt
+input: "document.pdf" or "podcast-episode.mp4"
+├── data/3_txt_transcribed/document.pdf.md.txt (from PDF)
+├── data/2_mp3_sound_source/podcast-episode.mp3 (from video)
+├── data/3_txt_transcribed/podcast-episode.txt (from audio transcription)
+├── data/4_augmented/document.pdf.md.augmented.txt
+└── data/5_entities/document.pdf.md.augmented.entities.txt
 ```
 
 ### Consolidated Knowledge Graph
@@ -215,6 +235,22 @@ python 4b_batch_parallel_extract_entities_from_augmented_txts.py data/5_entities
 - **0 arguments**: Extract from `data/4_augmented/` → `data/5_entities/`
 - **2 arguments**: Extract from `<source>` → `<target>` 
 - **1 argument**: Consolidate existing `*.entities.txt` files in `<target>` folder only
+
+## 🚀 Complete Pipeline Automation
+
+Run the entire pipeline with a single command:
+
+```bash
+export OPENAI_API_KEY="sk-your-key-here"
+
+# Complete processing (PDFs + Videos + Transcription + AI Analysis)
+python 0__batch_run_complete_pipeline.py
+```
+
+**Pipeline includes:**
+- Dependency checking with installation guidance
+- Automatic error handling and progress reporting  
+- Complete workflow from source documents to knowledge graphs
 
 ## ⚠️ Important Notes
 

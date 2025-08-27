@@ -1,3 +1,4 @@
+
 /.DS_Store
 /.claude
 /.venv
@@ -7,3 +8,6 @@
 /parallel_entity_extraction.log
 /transcription_debug.log
 /augmentation_debug.log
+mp3_extraction_debug.log
+pdf_extraction_debug.log
+data/
